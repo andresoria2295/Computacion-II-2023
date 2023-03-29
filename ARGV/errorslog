@@ -1,1 +1,11 @@
-pruebbass.txt
+Traceback (most recent call last):
+  File "Ejerc3.py", line 34, in <module>
+    fd = os.open(texto,os.O_RDONLY)
+FileNotFoundError: [Errno 2] No such file or directory: 'prueb.txt'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "Ejerc3.py", line 78, in <module>
+    sys.stderr.write(texto, file=sys.stderr)
+TypeError: write() takes no keyword arguments

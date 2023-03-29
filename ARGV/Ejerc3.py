@@ -72,7 +72,15 @@ try:
 
 except os.error:
     sys.stdout.write('\nError en archivo: '+ texto)
+    sys.stdout.write('\n')
+    file_error = open('errorslog', 'w')
+    sys.stderr = file_error
+    sys.stderr.write(texto, file=sys.stderr)
+    sys.stdout = sys.stderr
+    file_error.close()
+    '''
     with open('errorslog', mode='w') as file_object:
         #print(file=file_object)
         print(texto, file=file_object) #Muestra solo el print de except
         sys.stdout.write('\n')
+    '''
