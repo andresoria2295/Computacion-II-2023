@@ -1,0 +1,4 @@
+name,age,country
+Lucas,30,Austria
+Agustín,35,Belgium
+Julieta,40,Canada
