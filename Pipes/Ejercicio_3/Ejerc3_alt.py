@@ -1,39 +1,44 @@
-'''
-3- Verificar si el PIPE sigue existiendo cuendo el padre muere (termina el proceso),
-cuando el hijo muere [o cuendo mueren ambos]
-$ ls -l /proc/[pid]/fd/
-'''
-
 #!/usr/bin/python3
+
+import subprocess as sp
 import os
+import sys
 import time
 
-def main():
-    fdr, fdw = os.pipe()
-    pid = os.fork()
+hijoA = sp.Popen(['python3', 'HijoA.py'], stdin=sp.PIPE)
+hijoB = sp.Popen(['python3', 'HijoB.py'], stdin=sp.PIPE)
 
-    if pid == 0:
-        time.sleep(5)
-        # Este es el proceso hijo
-        # cerrar el pipe de salida
-        os.close(fdw)
-        print('Proceso hijo (PID: %d -- PPID: %d) '% (os.getpid(), os.getppid()))
-        # leer el mensaje enviado por el padre
-
-        mensaje = os.read(fdr, 100)
-        print("El hijo recibio el mensaje:")
-        print(mensaje.decode())
-        # cerrar el pipe de entrada
-        os.close(fdr)
-
-    os.close(fdr)
-    print('Proceso padre (PID: %d) '% os.getpid())
-    # enviar un mensaje al hijo
-    mensaje = "Hola, soy el padre, pero ya morí."
-    os.write(fdw, mensaje.encode())
-    # cerrar el pipe de salidas
-    os.close(fdw)
+print("Soy el padre -", os.getpid())
+mensaje = "Ustedes son mis hijos"
 
 
-if __name__ == "__main__":
-    main()
+# cerrar el pipe de entrada
+hijoA.stdin.write(mensaje.encode())
+hijoB.stdin.write(mensaje.encode())
+
+
+cp_ls = sp.Popen(['ls -la /proc/'+str(os.getpid()) +
+                 '/fd'], shell=True, stdout=sp.PIPE)
+cp_grep = sp.Popen(["grep", "pipe"], stdin=cp_ls.stdout)
+
+"""
+Se crea el pipe del padre con cada hijo, pero si corro el comando para ver los pipes por shell
+no me muestra el pipe del primer proceso hijo que se corrio
+"""
+time.sleep(4)
+hpid = os.getpid() + 1
+print("Hijo: ", hpid)
+print("el 1: ", cp_grep)
+
+
+cp_ls2 = sp.Popen(['ls -la /proc/'+str(hpid) +
+                   '/fd'], shell=True, stdout=sp.PIPE)
+cp_grep2 = sp.Popen(["grep", "pipe"], stdin=cp_ls2.stdout)
+
+# cerramos stdin para que no se quede esperando
+hijoB.stdin.close()
+hijoB.wait()
+hijoA.stdin.close()
+hijoA.wait()
+
+time.sleep(4)

@@ -9,6 +9,7 @@ import sys
 import time
 
 def main():
+    #Creación de dos pipes uno por c/hijo.
     hijoA = sp.Popen(['python3', 'HijoA.py'], stdin=sp.PIPE)
     hijoB = sp.Popen(['python3', 'HijoB.py'], stdin=sp.PIPE)
 
@@ -16,11 +17,11 @@ def main():
     sys.stdout.write('\n')
     mensaje = "Soy el padre de ustedes."
 
-    #Cerrar el pipe de entrada
+    #Mandar mensaje por el pipe de entrada
     hijoA.stdin.write(mensaje.encode())
     hijoB.stdin.write(mensaje.encode())
 
-    #Cerrar stdin para que no espere
+    #Cerrar entrada del pipe
     hijoA.stdin.close()
     hijoA.wait()
     hijoB.stdin.close()
@@ -28,7 +29,7 @@ def main():
     #hijoA.stdin.close()
     #hijoA.wait()
 
-    time.sleep(10)
+    time.sleep(12)
 
 if __name__ == "__main__":
     main()

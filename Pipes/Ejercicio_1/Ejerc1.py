@@ -11,11 +11,11 @@ import sys
 import subprocess as sp
 
 def main():
-
+    sys.stdout.write('\n Proceso padre (PID: %d) \n'% os.getpid())
     #Crear el hijo con subprocess usando el programa hijo.py y pipe
     hijo = sp.Popen(['python3','./Hijo.py'], stdin=sp.PIPE)
 
-    #Padre lee el archivo y escribe por entrada de pipe
+    #Padre lee el archivo y escribe por entrada del pipe
     fdr = os.open('Consignas.txt', os.O_RDONLY)
     text = (os.read(fdr, 1024)).decode()
     sys.stdout.write('\n Lectura de documento: \n')
@@ -24,7 +24,7 @@ def main():
     for line in text:
         hijo.stdin.write(line.encode())
 
-    # cerrar el pipe de entrada
+    #Cerrar el pipe de entrada
     hijo.stdin.close()
     hijo.wait()
 
