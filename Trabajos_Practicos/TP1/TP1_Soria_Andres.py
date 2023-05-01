@@ -33,10 +33,10 @@ def LeerArchivo(nombreArchivo):
         palabras = texto.split()
         #Cantidad de Líneas
         lineas = texto.splitlines()
-        line = len(lineas)
+        lines = len(lineas)
 
         #print(lineas)
-        resultado = [line, lineas]
+        resultado = [lines, lineas]
         #sys.stdout.write('\nnro de lineas: '+ str(line))
         return resultado
 
@@ -49,32 +49,82 @@ def LeerArchivo(nombreArchivo):
 def inversor(input):
     if len(input) <= 1:
         return input
-
     return inversor(input[1:]) + input[0]
 
 def main():
+    lista_read = []
+    lista_write = []
+    indice = []
+    indice2 = []
+    id_process = 0
     argumento = ArgsParse()
     nombreArchivo = argumento.archivo
     resultado = LeerArchivo(nombreArchivo)
-    line = resultado[0]
-    sys.stdout.write('\nnro de lineas: '+ str(line))
+    lines = resultado[0]
+    sys.stdout.write('\n Numero de lineas de archivo: '+ str(lines))
     lineas = resultado[1]
-    print(lineas)
-    reverso = inversor(lineas[2])
-    print(reverso)
+    sys.stdout.write('\n')
+    #print(lineas)
+    #Prueba parcial
+    #reverso = inversor(lineas[2])
+    #print(reverso)
 
-    #fdr, fdw = os.pipe()
+    sys.stdout.write('\n Proceso Padre: '+ str(os.getpid()))
+    sys.stdout.write('\n')
+    fdrp, fdwp = os.pipe()
 
+    #Creación de pipes de lectura y escritura por c/linea.
+    for i in range(lines):
+        fdr, fdw = os.pipe()
+        lista_read.append(fdr)
+        lista_write.append(fdw)
+
+    #Funcion que se le pasa lines, lineas,lista_read no devuelve nada.
     #Creación de n hijos de acuerdo a lineas.
-    for i in range(line):
+    for i in range(lines):
         pid = os.fork()
+        id_process += 1
+        indice.append(id_process)
         if pid == 0:
-            #print('\nHijo ', i+1)
-            reverso = inversor(lineas[i])
-            print(reverso)
-            #pipe_hijo_w = os.open(fif, os.O_WRONLY)
+            pipe_r = os.fdopen(lista_read[i])
+            line_read = pipe_r.readline()
+            print('\n Proceso Hijo', i+1,'-', os.getpid())
+            print('\n Linea ' + str(i+1) + ' capturada: ',line_read)
+            #reverso = inversor(lineas[i])
+            reverso = str(i+1)+": "+inversor(lineas[i])
+            #print(reverso)
+            #print('\n Hijo', i+1, 'retorna: ',reverso)
+            os.write(fdwp,(reverso+"\n").encode("utf-8"))
+            time.sleep(5)
+            pipe_r.close()
+            os._exit(0)
             #os.wait()
 
+    #Envio de lineas a hijos.
+    for i in range(lines):
+        envio_linea = lineas[i]+"\n"
+        os.write(lista_write[i], envio_linea.encode("utf-8"))
+    for i in range(lines):
+        os.wait()
+
+    #Lectura por el pipe de lo resuelto por hijos.
+    #for i in range(lines):
+    while True:
+        leido = os.read(fdrp, 1024)
+        leido = leido.decode()
+        lect_parcial = leido.split("\n")
+        #Quitar última posicion vacía.
+        lect_parcial.pop()
+        #Ordenar lista.
+        lect_parcial.sort()
+        print(lect_parcial)
+        #for i in lect_parcial:
+        #    muestra = lect_parcial[i].split()
+        #print(muestra)
+        for i in indice:
+            #print('Resultado de Hijo',indice[i-1],lect_parcial[i-1])
+            print('Resultado de Hijo',lect_parcial[i-1])
+        break;
 
 if __name__ == "__main__":
     main()
