@@ -13,11 +13,11 @@ Etapa 2
 Cuando el usuario introduzca "bye" en la terminal, H1 enviará al padre la señal USR2 y terminará.
 Al recibir la señal USR2, el padre, la enviará a H2 que también terminará.
 El padre esperará a ambos hijos y terminará también.
+python3 signals.py -f escritura.txt
 '''
 
 #!/usr/bin/python3
 import os
-import sys
 import argparse
 import mmap
 import signal
@@ -33,18 +33,21 @@ def ArgsParse():
     #print('\nArchivo de texto: %s' % args.f)
     return parser.parse_args()
 
-def lecturaPadre(signal,frame):
-    sys.stdout.write('\n Proceso Padre: '+ str(os.getpid()))
+def ejecucionH1(s, f):
+    os.kill(pidH1, signal.SIGUSR1)
+
+def lecturaPadre(s,f):
+    print("\n Proceso Padre: ", os.getpid())
     #Ubica en posición cero.
     area.seek(0)
     leido = area.read(16)
-    print("Lectura de Padre de memoria compartida: ", leido)
+    print("\n Lectura de Padre de memoria compartida: ", leido)
     #Envío de señal usr1 a hijo 2.
     os.kill(pidH2, signal.SIGUSR1)
 
-def H1(signal, frame):
-    print("Hijo 1 operando...")
-    linea = input("Ingresar una linea por teclado: ")
+def H1(s, f):
+    print("\n Hijo 1 ("+str(os.getpid())+") operando...")
+    linea = input("\n Ingresar una linea por teclado: ")
     if linea == "bye":
         #Envío de señal usr2 a padre.
         os.kill(os.getppid(), signal.SIGUSR2)
@@ -55,8 +58,8 @@ def H1(signal, frame):
     #Envío de señal usr1 a hijo padre.
     os.kill(os.getppid(), signal.SIGUSR1)
 
-def H2(signal, frame):
-    print("Hijo 2 operando...")
+def H2(s, f):
+    print("\n Hijo 2 ("+str(os.getpid())+") convirtiendo... ")
     #Ubica en posición cero.
     area.seek(0)
     leido = area.read(16)
@@ -65,59 +68,55 @@ def H2(signal, frame):
     fdw.write(str(leido.decode('utf-8').upper())+"\n")
     area.seek(0)
 
-def FinH1(signal, frame):
+def FinH1(s, f):
     exit()
 
-def FinH2(signal, frame):
+def FinH2(s, f):
     exit()
 '''
 def padreEjecutaHijo1(s, f):
     os.kill(pidH1, signal.SIGUSR1)
 '''
 def concluyePadre(signal, frame):
-    print("Ha finalizado la operación.")
+    print("\n Ha finalizado la operación.\n")
     #Envío de señal usr2 a hijo 2 para que le de fin al mismo.
     os.kill(pidH2, signal.SIGUSR2)
     os.wait()
     os.wait()
     exit()
 
-def main():
-    #Recepción de argumento.
-    argumento = ArgsParse()
-    fileName = argumento.archivo
+#Recepción de argumento.
+argumento = ArgsParse()
+fileName = argumento.archivo
 
+#Mapeo de memoria.
+area = mmap.mmap(-1, 16)
 
-    #Generación de señal para lectura desde proceso padre.
-    signal.signal(signal.SIGUSR1, lecturaPadre)
-    #Generación de señal para lectura desde proceso padre.
-    signal.signal(signal.SIGUSR2, concluyePadre)
+#Generación de señal para lectura desde proceso padre.
+signal.signal(signal.SIGUSR1, lecturaPadre)
+#Generación de señal para lectura desde proceso padre.
+signal.signal(signal.SIGUSR2, concluyePadre)
 
-    #Creación de procesos hijos
-    pidH1 = os.fork()
-    if pidH1 == 0:
-        #Establecimiento de comportamientos de señales de hijo 1.
-        signal.signal(signal.SIGUSR1, H1)
-        signal.signal(signal.SIGUSR2, FinH1)
-        while True:
-            #El proceso duerme hasta que reciba una señal.
-            signal.pause()
-
-    pidH2 = os.fork()
-    if pidH2 == 0:
-        #Establecimiento de comportamientos de señales de hijo 2.
-        signal.signal(signal.SIGUSR1, H2)
-        signal.signal(signal.SIGUSR2, FinH2)
-        while True:
-            #El proceso duerme hasta que reciba una señal.
-            signal.pause()
-
-    time.sleep(5)
+#Creación de procesos hijos
+pidH1 = os.fork()
+if pidH1 == 0:
+    #Establecimiento de comportamientos de señales de hijo 1.
+    signal.signal(signal.SIGUSR1, H1)
+    signal.signal(signal.SIGUSR2, FinH1)
     while True:
-        os.kill(pidH1, signal.SIGUSR1)
-        time.sleep(8)
+        #El proceso duerme hasta que reciba una señal.
+        signal.pause()
 
-if __name__ == "__main__":
-    #Mapeo de memoria.
-    area = mmap.mmap(-1, 16)
-    main()
+pidH2 = os.fork()
+if pidH2 == 0:
+    #Establecimiento de comportamientos de señales de hijo 2.
+    signal.signal(signal.SIGUSR1, H2)
+    signal.signal(signal.SIGUSR2, FinH2)
+    while True:
+        #El proceso duerme hasta que reciba una señal.
+        signal.pause()
+
+time.sleep(3)
+while True:
+    os.kill(pidH1, signal.SIGUSR1)
+    time.sleep(5)
