@@ -12,23 +12,20 @@ q = queue.LifoQueue()
 def worker():
     while True:
         item = q.get()
-        print('Working on '+str(item))
-        print('Finished '+str(item))
-        #Marcar tareas de la cola como realizadas.
+        print(f'Working on {item}')
+        print(f'Finished {item}')
         q.task_done()
 
-# turn-on the worker thread. Un hilo daemon ejecutan tareas en segundo plano.
+# turn-on the worker thread
 th = threading.Thread(target=worker, daemon=True)
 th.start()
 
 # send thirty task requests to the worker
 for item in range(30):
-    print('Putting item '+str(item))
+    print(f'Putting item {item}')
     q.put(item)
 print('All task requests sent\n', end='')
 
-# block until all tasks are done. Notifica cuando todas las tareas se hayan realizado.
+# block until all tasks are done
 q.join()
-#Forma de que un subproceso se bloquee hasta que otro subproceso haya terminado.
-#th.join()
 print('All work completed')
