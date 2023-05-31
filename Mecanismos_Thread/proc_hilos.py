@@ -13,15 +13,25 @@ import threading
 #Ruta del archivo FIFO (pipe con nombre).
 fifo_name = 'my_fifo'
 
+#Mecanismo para la sincronización entre hilos.
+#Garantiza que solo un hilo acceda a la sección crítica a la vez y evita problemas de concurrencia.
+lock = threading.Lock()
+
 def thread_task(line, prev_count, count_lines):
     #Cálculo de la cantidad de caracteres en la línea actual.
     caracteres = len(line.strip())
 
-    #Comprobación de la cuenta de la línea anterior.
-    if caracteres == prev_count:
-        print('\nLínea '+str(count_lines)+': '+str(line.strip())+ '- Cantidad: '+str(caracteres)+ ' caracteres - Coincide con la cuenta de la línea anterior.\n')
-    else:
-        print('\nLínea '+str(count_lines)+': '+str(line.strip())+ '- Cantidad: '+str(caracteres)+ ' caracteres - NO coincide con la cuenta de la línea anterior.\n')
+    #EL método acquire() adquiere el recurso (decrementa y bloquea) antes de realizar la comprobación.
+    lock.acquire()
+    try:
+        #Comprobación de la cuenta de la línea anterior.
+        if caracteres == prev_count:
+            print('\nLínea '+str(count_lines)+': '+str(line.strip())+ '- Cantidad: '+str(caracteres)+ ' caracteres - Coincide con la cuenta de la línea anterior.\n')
+        else:
+            print('\nLínea '+str(count_lines)+': '+str(line.strip())+ '- Cantidad: '+str(caracteres)+ ' caracteres - NO coincide con la cuenta de la línea anterior.\n')
+    finally:
+        #El método release() libera el recurso (incrementa y desbloquea) después de que se haya completado la comprobación.
+        lock.release()
 
 def main():
     print('\n Proceso receptor (PID: %d) '% os.getpid())
