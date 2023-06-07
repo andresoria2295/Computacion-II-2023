@@ -35,44 +35,46 @@ def calculoTermino(n, x):
     termino = coeficiente * numerador / denominador
     return termino
 
+#Cálculo de un término y se suma a la lista de terminos utilizando Lock para sincronización.
 def agregarTermino(n, x, terminos, lock):
-    """
-    Calcula un término y lo agrega a la lista de terminos.
-    """
     termino = calculoTermino(n, x)
     lock.acquire()
     terminos.append(termino)
     lock.release()
 
-#Sumatoria de términos.
-def sumaTerminos(terminos, ref):
+#Sumatoria de términos y resta con valor de referencia.
+def sumaTerminos(terminos, ref, resultado):
     suma = sum(terminos)
-    referencia = math.sin(x)
     resta = suma - ref
-    print('Suma de los términos calculados:', suma)
-    print('Resta con el valor de referencia:', resta)
+    #Union de dos listas.
+    resultado.extend([suma, resta])
 
 #Cálculo de la serie de Taylor para sen(x) por hilos.
 def calculoSerie(x, num_terminos, num_hilos, ref):
     hilos = []
     terminos = []
+    resultado = []
     lock = threading.Lock()
 
     for n in range(num_terminos):
-        hilo = threading.Thread(target=agregarTermino, args=(n, x, terminos))
-        hilos.append(hilo)
-    #for n in range(num_terminos):
-    #    thread = threading.Thread(target=lambda: terminos.append(calculoTermino(n, x)))
-    #    hilos.append(thread)
+        thread = threading.Thread(target=agregarTermino, args=(n, x, terminos, lock))
+        hilos.append(thread)
 
-    for i in range(0, num_terminos, num_hilos):
-        for thread in hilos[i:i+num_hilos]:
-            thread.start()
+    for thread in hilos:
+        thread.start()
 
-        for thread in hilos[i:i+num_hilos]:
-            thread.join()
+    suma_hilo = threading.Thread(target=sumaTerminos, args=(terminos, ref, resultado))
+    suma_hilo.start()
 
-    sumaTerminos(terminos, ref)
+    for thread in hilos:
+        thread.join()
+
+    suma_hilo.join()
+
+    #Asignación múltiple para desempaquetar los valores de resultado en las variables suma y resta.
+    suma, resta = resultado
+    print('Suma de los términos calculados:', suma)
+    print('Resta con el valor de referencia:', resta)
 
 #Valor de referencia para comparación.
 ref = float(input('Ingresar el valor de referencia: '))
