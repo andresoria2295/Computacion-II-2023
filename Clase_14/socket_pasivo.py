@@ -13,7 +13,7 @@ def main():
     #Crear un objeto socket.
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     #Asignación de IP y puerto al socket.
-    s.bind(('0.0.0.0', 50010))
+    s.bind(('0.0.0.0', 50001))
     #Número de conexiones que recibe. Socket de carácter pasivo.
     s.listen(1)
     while True:

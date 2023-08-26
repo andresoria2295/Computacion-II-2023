@@ -8,7 +8,7 @@ def main():
     #Dirección ip Telnet.
     host = "127.0.0.1"
     #Puerto empleado por el servidor.
-    port = 50010
+    port = 50001
 
     print("Estableciendo conexión con el servidor...")
     s.connect((host, port))

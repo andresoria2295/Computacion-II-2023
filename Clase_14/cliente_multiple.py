@@ -12,7 +12,7 @@ def main():
         #Dirección ip Telnet.
         host = "127.0.0.1"
         #Puerto empleado por el servidor.
-        port = 50010
+        port = 50001
 
         print("Conectando como cliente {}...".format(client_count))
         s.connect((host, port))
