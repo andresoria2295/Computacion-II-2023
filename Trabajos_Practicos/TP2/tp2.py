@@ -36,6 +36,11 @@ def convert_to_grayscale(input_image_path, output_image_path):
     #Guarda la imagen en una nueva ubicación.
     escala_gris.save(output_image_path)
 
+def abrir_imagen(img):
+    ruta = ("/home/andres/Documentos/Facultad/Computacion_II/Computacion_2023/GitHub/Computacion-II-2023/Trabajos_Practicos/TP2/img_salida/" + img)
+    img = Image.open(ruta)
+    img.show()
+
 #Define una clase que hereda de http.server.BaseHTTPRequestHandler para manejar las solicitudes HTTP.
 class ImageProcessingHandler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
@@ -44,6 +49,8 @@ class ImageProcessingHandler(http.server.BaseHTTPRequestHandler):
         self.send_header('Content-Type', 'text/html')
         self.end_headers()
         self.wfile.write(b'hola mundo GET\n')
+        self.wfile.write(b'Abriendo imagen..\n')
+        abrir_imagen('gray_image.jpg')
 
     def do_POST(self):
         print('REQUEST: ', self.requestline)
