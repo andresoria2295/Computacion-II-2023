@@ -4,13 +4,16 @@ import os
 import http.server
 import socketserver
 import threading
+import io
 from PIL import Image
 from io import BytesIO
 import multiprocessing
+from multiprocessing import Event
 
 #Define colas compartidas.
 image_queue = multiprocessing.Queue()
 processed_image_queue = multiprocessing.Queue()
+conversion_event = Event()
 
 #Función para crear un objeto ArgumentParser que manejará los argumentos de línea de comandos.
 def parser():
@@ -69,6 +72,9 @@ def process_image(image_queue, processed_image_queue, destino):
 
             #Pone los datos de la imagen en escala de grises en la cola correspondiente.
             processed_image_queue.put(data_imagen_gris)
+
+            #Establece el evento para indicar que la conversión de imagen ha terminado.
+            conversion_event.set()
 
         except Exception as e:
             print('Error al abrir la imagen: {}'.format(e))
@@ -136,6 +142,10 @@ class ImageProcessingHandler(http.server.BaseHTTPRequestHandler):
         #Lee los datos de la imagen de la solicitud POST.
         data_imagen = self.rfile.read(contenido)
 
+        #Se asegura de que el evento no esté establecido antes de procesar la nueva imagen.
+        #Garantiza que el servidor espere activamente a que ocurra el evento después de enviar la imagen para su procesamiento.
+        conversion_event.clear()
+
         #Encola la imagen para su procesamiento.
         image_queue.put(data_imagen)
 
@@ -150,6 +160,9 @@ class ImageProcessingHandler(http.server.BaseHTTPRequestHandler):
             #Crea un nuevo proceso hijo (subproceso) para procesamiento de la imagen.
             process = multiprocessing.Process(target=process_image, args=(image_queue, processed_image_queue, destino))
             process.start()
+
+            #Espera a que el evento se establezca antes de continuar.
+            conversion_event.wait()
 
             self.wfile.write(b'Imagen guardada en el servidor.\n')
 
