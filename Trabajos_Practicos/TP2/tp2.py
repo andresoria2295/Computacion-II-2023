@@ -9,6 +9,8 @@ from PIL import Image
 from io import BytesIO
 import multiprocessing
 from multiprocessing import Event
+import requests
+import socket
 
 #Define colas compartidas.
 image_queue = multiprocessing.Queue()
@@ -31,8 +33,8 @@ def parser():
     port = args.port
 
     #Uso de valores ingresados.
-    print('Dirección de escucha:', ip)
-    print('Puerto de escucha:', port)
+    print('Dirección IP:', ip)
+    print('Puerto:', port)
     return ip, port
 
 #Función para convertir imágenes a escala de grises.
@@ -49,7 +51,34 @@ def abrir_imagen(img):
     img = Image.open(ruta)
     img.show()
 
-def process_image(image_queue, processed_image_queue, destino):
+#Función que gestiona el envío de imagenes a servidor secundario.
+def send_image(img_grises):
+    try:
+        #URL del segundo servidor.
+        url = "http://localhost:5001"
+        #Factor de escala para la imagen.
+        scale = 0.4
+        headers = {'Factor-Escala': str(scale)}
+
+        #Convierte la imagen en bytes.
+        img_byte = BytesIO()
+        img_grises.save(img_byte, format='JPEG')
+        bytes_imagen = img_byte.getvalue()
+        #Configuración de los datos a enviar.
+        files = {'file': ('imagen_recibida.jpg', bytes_imagen, 'image/jpeg')}
+        #Realiza la solicitud POST al segundo servidor.
+        response = requests.post(url, files=files, headers=headers)
+
+        #Verifica si la solicitud fue exitosa.
+        if response.status_code == 200:
+            print("Imagen despachada al servidor B.")
+        else:
+            print("Error al enviar imagen al servidor B:", response.text)
+
+    except Exception as e:
+        print('Error al enviar imagen al servidor B:', e)
+
+def process_image(image_queue, processed_image_queue, destino, scale, second_server_url):
     while True:
         #Procesos hijos desencolan las solicitudes, obtienen la imagen y procesan en paralelo.
         data_imagen = image_queue.get()
@@ -61,6 +90,7 @@ def process_image(image_queue, processed_image_queue, destino):
             #Define el nombre del archivo y la ruta completa de salida.
             nombre_archivo = "gray_image.jpg"
             ruta_completa = os.path.join(destino, nombre_archivo)
+
             #Guarda la imagen en escala de grises y obtiene los datos de la imagen procesada.
             with BytesIO() as buffer_salida:
                 img_grises.save(ruta_completa, format="JPEG")
@@ -72,6 +102,8 @@ def process_image(image_queue, processed_image_queue, destino):
 
             #Pone los datos de la imagen en escala de grises en la cola correspondiente.
             processed_image_queue.put(data_imagen_gris)
+
+            send_image(img_grises)
 
             #Establece el evento para indicar que la conversión de imagen ha terminado.
             conversion_event.set()
@@ -98,6 +130,7 @@ class ImageProcessingHandler(http.server.BaseHTTPRequestHandler):
             self.send_header('Content-Type', 'image/jpg')
             self.send_header('Content-Length', len(content))
             self.end_headers()
+            self.wfile.write(b'Procesando solicitud GET..\n')
             self.wfile.write(content)
             #Envía la imagen al cliente.
             self.wfile.write(data_imagen_gris)
@@ -109,34 +142,18 @@ class ImageProcessingHandler(http.server.BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(b'Error: Imagen no encontrada.')
 
-
-
-
-        '''
-        # Añade el encabezado Content-Length con la longitud del archivo
-        content_length = os.path.getsize('gray_image.jpg')
-        self.send_header('Content-Length', content_length)
-        self.end_headers()
-        self.wfile.write(b'hola mundo GET\n')
-        self.wfile.write(b'Abriendo imagen..\n')
-
-        # Envía el contenido del archivo
-        with open('gray_image.jpg', 'rb') as file:
-            self.wfile.write(file.read())
-        '''
-        #Desencola la imagen en escala de grises de la cola.
-        #data_imagen_gris = processed_image_queue.get()
-        #Envía la imagen al cliente.
-        #self.wfile.write(data_imagen_gris)
-        #abrir_imagen('gray_image.jpg')
-
     def do_POST(self):
         print('REQUEST: ', self.requestline)
         self.send_response(200)
         self.send_header('Content-Type', 'text/html')
         self.end_headers()
-        self.wfile.write(b'hola mundo POST\n')
+        self.wfile.write(b'Procesando solicitud POST..\n')
         self.wfile.write(b'Procesamiento de imagen en curso..\n')
+
+        #Obtiene el factor de escala y la URL del segundo servidor
+        scale = float(self.headers.get('Scale-Factor', '0.5'))
+        second_server_url = "http://localhost:5001"
+
         #Obtiene la longitud del contenido de la solicitud POST.
         contenido = int(self.headers["Content-Length"])
         #Lee los datos de la imagen de la solicitud POST.
@@ -158,7 +175,7 @@ class ImageProcessingHandler(http.server.BaseHTTPRequestHandler):
                 os.makedirs(destino)
 
             #Crea un nuevo proceso hijo (subproceso) para procesamiento de la imagen.
-            process = multiprocessing.Process(target=process_image, args=(image_queue, processed_image_queue, destino))
+            process = multiprocessing.Process(target=process_image, args=(image_queue, processed_image_queue, destino, scale, second_server_url))
             process.start()
 
             #Espera a que el evento se establezca antes de continuar.
@@ -169,8 +186,8 @@ class ImageProcessingHandler(http.server.BaseHTTPRequestHandler):
         #Maneja cualquier excepción que pueda ocurrir al abrir la imagen y envía respuesta de error.
         except Exception as e:
             #Maneja errores en la creación del subproceso.
-            print('Error al crear el subproceso: {}'.format(e))
-            #print('Error al abrir la imagen: {}'.format(e))
+            print('Error al crear subproceso: {}'.format(e))
+
             #Error interno del servidor.
             self.send_response(500)
             self.send_header('Content-Type', 'text/html')
@@ -179,7 +196,7 @@ class ImageProcessingHandler(http.server.BaseHTTPRequestHandler):
 
 #Define una función serve_forever_on_thread() que inicia el servidor HTTP en un hilo.
 def serve_forever_on_thread(httpd, PORT):
-    print('Ejecutando servidor httpd en puerto:', PORT)
+    print('Corriendo servidor A en puerto:', PORT)
     httpd.serve_forever()
 
 def stop_server(httpd):
@@ -195,13 +212,12 @@ def main():
     socketserver.TCPServer.allow_reuse_address = True
 
     #Configura el manejador de solicitudes HTTP y crea una instancia del servidor HTTP.
-    myhttphandler = ImageProcessingHandler
-    httpd = http.server.HTTPServer(('', PORT), myhttphandler)
+    #myhttphandler = ImageProcessingHandler
+    httpd = http.server.HTTPServer((IP, PORT), ImageProcessingHandler)
 
     #Crea un hilo para gestionar el servidor HTTP.
     httpd_thread = threading.Thread(target=serve_forever_on_thread, args=(httpd, PORT))
     httpd_thread.daemon = True
-
     #Inicia el hilo del servidor HTTP.
     httpd_thread.start()
 
@@ -216,6 +232,7 @@ def main():
     except KeyboardInterrupt:
         print('\nRecibiendo interrupción repentina. Deteniendo el servidor...')
         server_running = False
+
     #Detiene el servidor si no se ha detenido correctamente.
     if not server_running:
         stop_server(httpd)
