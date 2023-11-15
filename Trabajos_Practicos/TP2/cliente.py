@@ -58,7 +58,7 @@ if __name__ == '__main__':
     servidor_port = 1111
 
     #Configura la ruta de la imagen que deseas enviar al servidor.
-    imagen_path = "/home/andres/Documentos/Facultad/Computacion_II/Computacion_2023/GitHub/Computacion-II-2023/Trabajos_Practicos/TP2/img_entrada/prueba2.jpg"
+    imagen_path = "img_entrada/prueba.jpg"
 
     #Llama a la función para enviar/recibir la imagen al/desde el servidor.
     enviar_imagen(servidor_host, servidor_port, imagen_path, args.output, args.method)

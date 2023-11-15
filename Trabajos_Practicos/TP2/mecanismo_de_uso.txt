@@ -23,5 +23,5 @@ El segundo servidor funciona correctamente, redimensiona imagen y devuelve a pri
 El cliente metodo post ya sea por script o por curl funciona correctamente.
 EL cliente metodo get, por el momento, tiene una falla que arroja imagen erronea.
 
-Aclaración: Ejecutar 3 los 3 scripts, hacer prueba. Para realizar una segunda prueba, sugiero detener ejecución de scripts. Por alguna razón, no me permite continuar mandando por el momento peticiones.
+Aclaración: Ejecutar los 3 scripts y hacer prueba. Para realizar una segunda prueba, sugiero detener ejecución de scripts. Por alguna razón, no me permite, por el momento, continuar mandando peticiones de forma consecutiva.
 

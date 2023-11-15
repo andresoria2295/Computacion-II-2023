@@ -161,7 +161,7 @@ class ImageProcessingHandler(http.server.BaseHTTPRequestHandler):
 
         try:
             #Define la ruta de la carpeta de destino.
-            destino = "/home/andres/Documentos/Facultad/Computacion_II/Computacion_2023/GitHub/Computacion-II-2023/Trabajos_Practicos/TP2/img_salida"
+            destino = "img_salida"
 
             #Verifica si el directorio de destino existe, caso contrario, la crea.
             if not os.path.exists(destino):
