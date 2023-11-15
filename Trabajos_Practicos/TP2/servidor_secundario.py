@@ -28,8 +28,8 @@ class ImageReceiverHandler(BaseHTTPRequestHandler):
             content_type, _ = cgi.parse_header(self.headers['Content-Type'])
             content_length = int(self.headers['Content-Length'])
             #img_data = self.rfile.read(content_length)
-            self.wfile.write(b'Procesando solicitud POST..\n')
-            self.wfile.write(b'Procesando imagen recibida del servidor A..\n')
+            #self.wfile.write(b'Procesando solicitud POST..\n')
+            #self.wfile.write(b'Procesando imagen recibida del servidor A..\n')
 
             #Configura el parser para obtener los datos del formulario enviado en la solicitud POST.
             data_img_form = cgi.FieldStorage(
@@ -61,7 +61,7 @@ class ImageReceiverHandler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header('Content-type', 'image/jpeg')
             self.end_headers()
-            self.wfile.write(b'Imagen despachada al servidor B.\n')
+            #self.wfile.write(b'Imagen despachada al servidor B.\n')
 
             #Convierte la imagen redimensionada a bytes y se envía.
             img_byte = BytesIO()
@@ -74,11 +74,6 @@ class ImageReceiverHandler(BaseHTTPRequestHandler):
             self.send_response(500)
             self.end_headers()
             self.wfile.write('Error en procesamiento de imagen: {}'.format(str(e)).encode())
-
-        finally:
-            #Cierra la conexión correctamente.
-            self.rfile.close()
-            self.wfile.close()
 
 if __name__ == "__main__":
     ip, port = parser()

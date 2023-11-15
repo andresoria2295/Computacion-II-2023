@@ -1,0 +1,25 @@
+
+###Uso Personal:
+
+Server A:
+./tp2.py -i 127.0.0.1 -p 1111
+
+Server B:
+./servidor_secundario.py -i localhost -p 5001
+
+Cliente opcional:
+./cliente.py -o gray_image.jpg -m POST
+./cliente.py -o gray_image.jpg -m GET
+
+
+Solicitudes POST: curl -X POST --data-binary "@/home/andres/Documentos/Facultad/Computacion_II/Computacion_2023/GitHub/Computacion-II-2023/Trabajos_Practicos/TP2/img_entrada/prueba.jpg" http://127.0.0.1:1111
+
+Solicitudes GET: curl -o gray_image.jpg http://127.0.0.1:1111
+
+###NOTA
+
+El primer servidor funciona correctamente, procesa imagen a grises.
+El segundo servidor funciona correctamente, redimensiona imagen y devuelve a primer servidor.
+El cliente metodo post ya sea por script o por curl funciona correctamente.
+EL cliente metodo get, por el momento, tiene una falla que arroja imagen erronea.
+

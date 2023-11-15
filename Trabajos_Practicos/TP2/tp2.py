@@ -37,15 +37,6 @@ def parser():
     print('Puerto:', port)
     return ip, port
 
-#Función para convertir imágenes a escala de grises.
-def convert_to_grayscale(input_image_path, output_image_path):
-    #Abre la imagen de entrada.
-    imagen = Image.open(input_image_path)
-    #Convierte la imagen a escala de grises.
-    escala_gris = imagen.convert("L")
-    #Guarda la imagen en una nueva ubicación.
-    escala_gris.save(output_image_path)
-
 def abrir_imagen(img):
     ruta = ("/home/andres/Documentos/Facultad/Computacion_II/Computacion_2023/GitHub/Computacion-II-2023/Trabajos_Practicos/TP2/img_salida/" + img)
     img = Image.open(ruta)
@@ -72,6 +63,7 @@ def send_image(img_grises):
         #Verifica si la solicitud fue exitosa.
         if response.status_code == 200:
             print("Imagen despachada al servidor B.")
+            return response
         else:
             print("Error al enviar imagen al servidor B:", response.text)
 
@@ -103,10 +95,11 @@ def process_image(image_queue, processed_image_queue, destino, scale, second_ser
             #Pone los datos de la imagen en escala de grises en la cola correspondiente.
             processed_image_queue.put(data_imagen_gris)
 
-            send_image(img_grises)
+            respuesta = send_image(img_grises)
 
             #Establece el evento para indicar que la conversión de imagen ha terminado.
             conversion_event.set()
+            return respuesta
 
         except Exception as e:
             print('Error al abrir la imagen: {}'.format(e))
@@ -182,6 +175,9 @@ class ImageProcessingHandler(http.server.BaseHTTPRequestHandler):
             conversion_event.wait()
 
             self.wfile.write(b'Imagen guardada en el servidor.\n')
+
+            #Termina la conexión.
+            self.send_header('Connection', 'close')
 
         #Maneja cualquier excepción que pueda ocurrir al abrir la imagen y envía respuesta de error.
         except Exception as e:
