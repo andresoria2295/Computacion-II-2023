@@ -65,15 +65,17 @@ class ImageReceiverHandler(BaseHTTPRequestHandler):
 
             #Convierte la imagen redimensionada a bytes y se envía.
             img_byte = BytesIO()
-            img_resized.save(img_byte, format='JPEG')
+            img_reduce.save(img_byte, format='JPEG')
             bytes_imagen = img_byte.getvalue()
             self.wfile.write(bytes_imagen)
 
         except Exception as e:
             #Si hay un error, envía una respuesta de error al cliente.
+            print(str(e))
             self.send_response(500)
             self.end_headers()
             self.wfile.write('Error en procesamiento de imagen: {}'.format(str(e)).encode())
+
 
 if __name__ == "__main__":
     ip, port = parser()

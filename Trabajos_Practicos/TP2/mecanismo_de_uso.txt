@@ -18,8 +18,10 @@ Solicitudes GET: curl -o gray_image.jpg http://127.0.0.1:1111
 
 ###NOTA
 
-El primer servidor funciona correctamente, procesa imagen a grises.
-El segundo servidor funciona correctamente, redimensiona imagen y devuelve a primer servidor.
+El primer servidor funciona correctamente, procesa imagen a grises, devuelve a cliente y en este caso, envia a segundo servidor.
+El segundo servidor funciona correctamente, redimensiona imagen y devuelve a primer servidor, que devuelve a cliente.
 El cliente metodo post ya sea por script o por curl funciona correctamente.
 EL cliente metodo get, por el momento, tiene una falla que arroja imagen erronea.
+
+Aclaración: Ejecutar 3 los 3 scripts, hacer prueba. Para realizar una segunda prueba, sugiero detener ejecución de scripts. Por alguna razón, no me permite continuar mandando por el momento peticiones.
 

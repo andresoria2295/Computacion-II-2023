@@ -179,6 +179,8 @@ class ImageProcessingHandler(http.server.BaseHTTPRequestHandler):
             #Termina la conexión.
             self.send_header('Connection', 'close')
 
+            self.server.shutdown()
+
         #Maneja cualquier excepción que pueda ocurrir al abrir la imagen y envía respuesta de error.
         except Exception as e:
             #Maneja errores en la creación del subproceso.
