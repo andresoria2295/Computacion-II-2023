@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 import argparse
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from PIL import Image
